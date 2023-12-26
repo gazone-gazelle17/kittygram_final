@@ -12,18 +12,23 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
+    image: gazonegazelle17/kittygram_backend
     env_file: .env
+    command: >
+      bash -c "./manage.py migrate && gunicorn -b 0.0.0.0:8000 kittygram_backend.wsgi:application"
     depends_on:
       - db
     volumes:
       - media:/app/media
       - static:/app/static
   frontend:
+    image: gazonegazelle17/kittygram_frontend
     env_file: .env
     command: cp -r /app/build/. /static/
     volumes:
       - static:/static
   gateway:
+    image: gazonegazelle17/gateway
     env_file: .env
     depends_on:
       - backend
