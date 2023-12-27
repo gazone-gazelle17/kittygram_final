@@ -15,7 +15,7 @@ services:
     image: gazonegazelle17/kittygram_backend
     env_file: .env
     command: >
-      bash -c "./manage.py migrate && gunicorn -b 0.0.0.0:8000 kittygram_backend.wsgi:application"
+      bash -c "./manage.py migrate && gunicorn -b 0.0.0.0:8080 kittygram_backend.wsgi:application"
     depends_on:
       - db
     volumes:
@@ -33,7 +33,7 @@ services:
     depends_on:
       - backend
     ports:
-      - 80:81
+      - 8080:81
     volumes:
       - static:/static
       - media:/app/media
