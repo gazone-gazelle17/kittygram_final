@@ -1,9 +1,6 @@
 name: Main Kittygram Workflow
 
-on:
-  push:
-    branches:
-      - main
+on: push
 
 jobs:
   tests:
@@ -12,9 +9,9 @@ jobs:
       postgres:
         image: postgres:13.10
         env:
-          POSTGRES_USER: django_user
-          POSTGRES_PASSWORD: django_password
-          POSTGRES_DB: django_db
+          POSTGRES_USER: kittygram_user
+          POSTGRES_PASSWORD: kittygram_password
+          POSTGRES_DB: kittygram
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -30,39 +27,41 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8==6.0.0 flake8-isort==6.0.0
         pip install -r ./backend/requirements.txt
-     - name: Flake8 and Django tests
-       env:
-         POSTGRES_USER: django_user
-         POSTGRES_PASSWORD: django_password
-         POSTGRES_DB: django_db
-         DB_HOST: 127.0.0.1
-         DB_PORT: 5432
-       run: |
+    - name: Flake8 and Django tests
+      env:
+        POSTGRES_USER: kittygram_user
+        POSTGRES_PASSWORD: kittygram_password
+        POSTGRES_DB: kittygram
+        DB_HOST: 127.0.0.1
+        DB_PORT: 5432
+      run: |
          python -m flake8 backend/
          cd backend/
          python manage.py test
   build_and_push_frontend:
     name: Push frontend Docker image to DockerHub
     runs-on: ubuntu-latest
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+    if: github.ref == 'refs/heads/main'
+    steps: 
+    - name: Check out code 
+      uses: actions/checkout@v3 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v2  
     - name: Login to Docker
       uses: docker/login-action@v2
       with:
-        username: $ {{ secrets.DOCKER_USERNAME }}
-        password: $ {{ secrets.DOCKER_PASSWORD }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Push to DockerHub
       uses: docker/build-push-action@v4
       with:
         context: ./frontend/
         push: true
-        tags: gazonegazelle17/kittygram_frontend:latest
+        tags: ${{ secrets.DOCKER_NICKNAME }}/kittygram_frontend:latest
   build_and_push_backend:
     name: Push backend Docker image to DockerHub
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     needs: tests
     steps:
     - name: Check out code
@@ -72,17 +71,18 @@ jobs:
     - name: Login to Docker
       uses: docker/login-action@v2
       with:
-        username: $ {{ secrets.DOCKER_USERNAME }}
-        password: $ {{ secrets.DOCKER_PASSWORD }}
-      - name: Push to DockerHub
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend/
-          push: true
-          tags: gazonegazelle17/kittygram_backend:latest
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Push to DockerHub
+      uses: docker/build-push-action@v4
+      with:
+        context: ./backend/
+        push: true
+        tags: ${{ secrets.DOCKER_NICKNAME }}/kittygram_backend:latest
   build_and_push_gateway:
     name: Push gateway Docker image to DockerHub
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -91,23 +91,24 @@ jobs:
     - name: Login to Docker
       uses: docker/login-action@v2
       with:
-        username: $ {{ secrets.DOCKER_USERNAME }}
-        password: $ {{ secrets.DOCKER_PASSWORD }}
-      - name: Push to DockerHub
-        uses: docker/build-push-action@v4
-        with:
-          context: ./gateway/
-          push: true
-          tags: gazonegazelle17/kittygram_gateway:latest
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Push to DockerHub
+      uses: docker/build-push-action@v4
+      with:
+        context: ./gateway/
+        push: true
+        tags: ${{ secrets.DOCKER_NICKNAME }}/kittygram_gateway:latest
   deploy:
     runs-on: ubuntu-latest
-    needs: 
+    if: github.ref == 'refs/heads/main'
+    needs:
       - build_and_push_frontend
       - build_and_push_backend
       - build_and_push_gateway
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3 
     - name: Copy docker-compose.yml
       uses: appleboy/scp-action@master
       with:
@@ -129,9 +130,9 @@ jobs:
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml down
           sudo docker compose -f docker-compose.production.yml up -d
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
-          sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+          sudo docker compose -f docker-compose.production.yml exec backend python$
+          sudo docker compose -f docker-compose.production.yml exec backend python$
+          sudo docker compose -f docker-compose.production.yml exec backend cp -r $
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
@@ -142,7 +143,7 @@ jobs:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
         message: |
-          $ {{ github.actor }} created commit:
-          Commit message: $ {{ github.event.commits[0].message }}
-          Repository: ${{ github.repository }}
+          ${{ github.actor }} created commit:
+          Commit message: ${{ github.event.commits[0].message }}
+          Repository: ${{ github.repository }} 
           See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
