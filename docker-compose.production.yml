@@ -34,7 +34,7 @@ services:
       - backend
       - frontend
     ports:
-      - 8080:81
+      - 8080:80
     volumes:
       - static:/static
       - media:/app/media
