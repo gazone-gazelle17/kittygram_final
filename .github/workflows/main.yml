@@ -127,6 +127,7 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd kittygram_final
+          sleep 30
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml down
           sudo docker compose -f docker-compose.production.yml up -d
