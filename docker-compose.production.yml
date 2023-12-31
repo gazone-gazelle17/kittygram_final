@@ -18,7 +18,7 @@ services:
       - db
     volumes:
       - media:/app/media
-      - static:/static
+      - static:/backend_static/
   frontend:
     image: gazonegazelle17/kittygram_frontend
     env_file: .env
