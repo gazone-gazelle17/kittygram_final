@@ -109,7 +109,7 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v3 
-    - name: Copy docker-compose.yml
+    - name: Copy docker-compose.production.yml
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.HOST }}
