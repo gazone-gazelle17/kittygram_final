@@ -127,7 +127,9 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd kittygram
-          pwd  # Добавим вывод текущей директории
+          pwd
+          ls -la
+          cp /github/workspace/.env .
           ls -la
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml down
